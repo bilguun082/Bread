@@ -1,0 +1,87 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   // Жишээ нь: "1-р гурилын талх", "Бүхэл үрийн талх", "Багет"
+  sku       String   @unique // white, whole, baguette
+  price     Float    // Зарах үнэ (төгрөг)
+  cost      Float    // Өртөг (төгрөг)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Store {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  name           String           // Дэлгүүрийн нэр (Жишээ: Номин 8 нэрийн)
+  ownerName      String?          // Эзэн / худалдагчийн нэр
+  phone          String?          // Утасны дугаар
+  address        String?          // Хаяг, байршил
+  currentBalance Float            @default(0) // Одоогийн өр (эерэг бол авлага/өр)
+  routeOrder     Int              @default(0) // Маршрутын дараалал
+  deliveries     DeliveryRecord[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model DailyRun {
+  id             String           @id @default(auto()) @map("_id") @db.ObjectId
+  date           String           @unique // YYYY-MM-DD
+  status         String           @default("IN_PROGRESS") // "IN_PROGRESS" | "COMPLETED"
+  loadedWhite    Int              @default(0) // Ачсан: 1-р гурилын талх
+  loadedWhole    Int              @default(0) // Ачсан: Бүхэл үрийн талх
+  loadedBaguette Int              @default(0) // Ачсан: Багет
+  deliveries     DeliveryRecord[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model DeliveryRecord {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  dailyRunId       String?   @db.ObjectId
+  dailyRun         DailyRun? @relation(fields: [dailyRunId], references: [id])
+  storeId          String    @db.ObjectId
+  store            Store     @relation(fields: [storeId], references: [id])
+  date             DateTime  @default(now())
+
+  // Хүргэсэн тоо
+  deliveredWhite   Int       @default(0)
+  deliveredWhole   Int       @default(0)
+  deliveredBaguette Int      @default(0)
+
+  // Буцаалтын тоо (өчигдрийн зарагдаагүй үлдсэн)
+  returnedWhite    Int       @default(0)
+  returnedWhole    Int       @default(0)
+  returnedBaguette Int       @default(0)
+
+  // Мөнгөн дүн
+  prevBalance      Float     @default(0) // Тухайн үеийн өмнөх өр
+  subtotalAmount   Float     @default(0) // Өнөөдөр өгсөн барааны дүн
+  returnAmount     Float     @default(0) // Буцаалтын хасалт дүн
+  todayDue         Float     @default(0) // Өнөөдөр төлөх цэвэр дүн (subtotal - return)
+  totalPayable     Float     @default(0) // Өмнөх өртэй нийлээд төлөх дүн (prevBalance + todayDue)
+
+  paidCash         Float     @default(0) // Бэлнээр өгсөн
+  paidTransfer     Float     @default(0) // Дансаар өгсөн
+  debtAdded        Float     @default(0) // Өрөнд үлдсэн шинэ дүн
+  newBalance       Float     @default(0) // Эцсийн үлдэгдэл өр
+
+  note             String?
+  createdAt        DateTime  @default(now())
+}
+
+model Expense {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  date      String   // YYYY-MM-DD
+  category  String   // "Гурил", "Түлш", "Уут сав", "Цахилгаан", "Бусад"
+  amount    Float
+  note      String?
+  createdAt DateTime @default(now())
+}
