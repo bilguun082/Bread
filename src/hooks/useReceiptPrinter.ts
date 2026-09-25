@@ -18,13 +18,22 @@ export function useReceiptPrinter() {
     storeAddress?: string | null,
     products?: Product[]
   ): ReceiptData => {
-    const whitePrice = products?.find((p) => p.sku === 'white')?.price || 4500;
-    const wholePrice = products?.find((p) => p.sku === 'whole')?.price || 5000;
-    const baguettePrice = products?.find((p) => p.sku === 'baguette')?.price || 4000;
+    const whiteProduct = products?.find((p) => p.sku === 'white');
+    const wholeProduct = products?.find((p) => p.sku === 'whole');
+    const baguetteProduct = products?.find((p) => p.sku === 'baguette');
+
+    const whitePrice = whiteProduct?.price || 4500;
+    const wholePrice = wholeProduct?.price || 5000;
+    const baguettePrice = baguetteProduct?.price || 4000;
+
+    const whiteBarcode = whiteProduct?.barcode || '8658000545216';
+    const wholeBarcode = wholeProduct?.barcode || '8658000545230';
+    const baguetteBarcode = baguetteProduct?.barcode || '8658000545247';
 
     const items = [
       {
-        name: '1-r guril',
+        name: whiteProduct?.name || '1-р гурил талх',
+        barcode: whiteBarcode,
         delivered: record.deliveredWhite,
         returned: record.returnedWhite,
         net: record.deliveredWhite - record.returnedWhite,
@@ -32,7 +41,8 @@ export function useReceiptPrinter() {
         lineTotal: (record.deliveredWhite - record.returnedWhite) * whitePrice,
       },
       {
-        name: 'Bukhel ur',
+        name: wholeProduct?.name || 'Бүхэл үр талх',
+        barcode: wholeBarcode,
         delivered: record.deliveredWhole,
         returned: record.returnedWhole,
         net: record.deliveredWhole - record.returnedWhole,
@@ -40,7 +50,8 @@ export function useReceiptPrinter() {
         lineTotal: (record.deliveredWhole - record.returnedWhole) * wholePrice,
       },
       {
-        name: 'Baguette',
+        name: baguetteProduct?.name || 'Багет',
+        barcode: baguetteBarcode,
         delivered: record.deliveredBaguette,
         returned: record.returnedBaguette,
         net: record.deliveredBaguette - record.returnedBaguette,

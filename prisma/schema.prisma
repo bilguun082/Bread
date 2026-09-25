@@ -11,6 +11,7 @@ model Product {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String   // Жишээ нь: "1-р гурилын талх", "Бүхэл үрийн талх", "Багет"
   sku       String   @unique // white, whole, baguette
+  barcode   String?  // Баркод (Жишээ нь: "8658000545216")
   price     Float    // Зарах үнэ (төгрөг)
   cost      Float    // Өртөг (төгрөг)
   sortOrder Int      @default(0)

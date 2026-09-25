@@ -10,6 +10,7 @@ async function main() {
     {
       name: "1-р гурилын талх",
       sku: "white",
+      barcode: "8658000545216",
       price: 4500,
       cost: 2200,
       sortOrder: 1,
@@ -17,6 +18,7 @@ async function main() {
     {
       name: "Бүхэл үрийн талх",
       sku: "whole",
+      barcode: "8658000545230",
       price: 5000,
       cost: 2500,
       sortOrder: 2,
@@ -24,6 +26,7 @@ async function main() {
     {
       name: "Багет (Baguette)",
       sku: "baguette",
+      barcode: "8658000545247",
       price: 4000,
       cost: 1800,
       sortOrder: 3,

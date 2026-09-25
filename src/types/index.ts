@@ -5,6 +5,7 @@ export interface Product {
   id: string;
   name: string;
   sku: 'white' | 'whole' | 'baguette';
+  barcode?: string | null;
   price: number;
   cost: number;
   sortOrder: number;
@@ -144,6 +145,7 @@ export interface DailyCloseoutSummary {
  */
 export interface ReceiptItem {
   name: string;
+  barcode?: string | null;
   delivered: number;
   returned: number;
   net: number;

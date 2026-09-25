@@ -80,16 +80,24 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
               <span className="w-2/5 text-right">Дүн</span>
             </div>
 
-            <div className="space-y-1.5 pt-1.5">
+            <div className="space-y-2 pt-1.5">
               {receiptData.items.map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center text-[11px]">
-                  <span className="w-2/5 font-bold truncate">{item.name}</span>
-                  <span className="w-1/5 text-center text-slate-700">
-                    {item.delivered}/{item.returned}
-                  </span>
-                  <span className="w-2/5 text-right font-black">
-                    {formatTugrik(item.lineTotal)}
-                  </span>
+                <div key={idx} className="border-b border-dotted border-slate-200 pb-1.5 last:border-b-0">
+                  <div className="flex justify-between items-center text-[11px]">
+                    <span className="font-bold text-slate-900">{item.name}</span>
+                    <span className="text-slate-700 font-medium">
+                      {item.delivered}/{item.returned}
+                    </span>
+                    <span className="text-right font-black">
+                      {formatTugrik(item.lineTotal)}
+                    </span>
+                  </div>
+                  {item.barcode && (
+                    <div className="text-[10px] text-slate-500 font-mono tracking-wider flex items-center justify-between pt-0.5">
+                      <span>Баркод:</span>
+                      <span className="font-bold text-slate-800">{item.barcode}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

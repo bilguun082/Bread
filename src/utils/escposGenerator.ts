@@ -46,12 +46,15 @@ export function generateReceiptPlainText(data: ReceiptData): string {
   ];
 
   for (const item of data.items) {
-    // Жишээ: "1-r guril      10    1  40,500T"
+    // Жишээ: "1-р гурил      10    1  40,500T"
     const nameShort = item.name.substring(0, 13).padEnd(13, ' ');
     const ogsStr = String(item.delivered).padStart(3, ' ');
     const bucStr = String(item.returned).padStart(3, ' ');
     const dunStr = formatTugrik(item.lineTotal).replace('₮', 'T').padStart(9, ' ');
     lines.push(`${nameShort}${ogsStr} ${bucStr} ${dunStr}`);
+    if (item.barcode) {
+      lines.push(`  Barkod: ${item.barcode}`);
+    }
   }
 
   lines.push(subDivider);
