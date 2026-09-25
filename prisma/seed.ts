@@ -38,47 +38,161 @@ async function main() {
     });
   }
 
-  // 2. Дэлгүүрүүд (Маршрутын дарааллаар)
+  // 2. Дэлгүүрүүд (Маршрутын дарааллаар 22 бодит цэг)
   const stores = [
     {
-      name: "Номин 8 нэрийн",
-      ownerName: "Дулмаа эгч",
-      phone: "99112233",
-      address: "13-р хороолол, 24-р байр",
-      currentBalance: 45000,
       routeOrder: 1,
+      name: "Ханбүргэдэй MPM",
+      phone: "75880909, 88826056",
+      address: "13-р хороолол, Натурын зам дагуу MPM оффиссын барилгын 1 давхарт",
+      currentBalance: 0,
     },
     {
-      name: "Амар хүнс",
-      ownerName: "Батболд ах",
-      phone: "88001122",
-      address: "Сансар, үйлчилгээний төвийн хажууд",
-      currentBalance: 0,
       routeOrder: 2,
-    },
-    {
-      name: "Баянзүрх мини маркет",
-      ownerName: "Оюунцэцэг",
-      phone: "91919191",
-      address: "Бөхийн өргөөний зүүн хойно",
-      currentBalance: 60000,
-      routeOrder: 3,
-    },
-    {
-      name: "Солонго 8 нэрийн",
-      ownerName: "Гансүх",
-      phone: "89898989",
-      address: "100 айл, замын урд",
-      currentBalance: 15000,
-      routeOrder: 4,
-    },
-    {
-      name: "Энхжин супермаркет",
-      ownerName: "Цэцэгмаа",
-      phone: "95959595",
-      address: "Баянмонгол хороолол, 101-р байр",
+      name: "Ханбүргэдэй Глобал",
+      phone: "75880909",
+      address: "ХУД, Глобал молл 1 давхарт, Жаргалан хотхоны замын эсрэг талд",
       currentBalance: 0,
+    },
+    {
+      routeOrder: 3,
+      name: "Ханбүргэдэй Акояа",
+      phone: "75880909, 96313341",
+      address: "ХУД, AKOYA Mall салбар",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 4,
+      name: "Ханбүргэдэй Парксайд",
+      phone: "75880909, 99673539",
+      address: "ХУД, Үндэсний цэцэрлэгт хүрээлэнгийн замын хойно Parkside салбар",
+      currentBalance: 0,
+    },
+    {
       routeOrder: 5,
+      name: "Ханбүргэдэй Ривергарден",
+      phone: "75880909",
+      address: "ХУД, Ривергарден хотхонд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 6,
+      name: "Ханбүргэдэй Голден Будда",
+      phone: "75880909",
+      address: "ХУД, Зайсан, Голден будда хотхонд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 7,
+      name: "Ханбүргэдэй Богд вилла",
+      phone: "75880909",
+      address: "ХУД, Яармаг, Богд Вилла хотхонд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 8,
+      name: "Ханбүргэдэй Максвелл",
+      phone: "75880909",
+      address: "ХУД, Яармаг, MAXWELL Residence хотхонд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 9,
+      name: "Ханбүргэдэй төв дэлгүүр",
+      phone: "75880909",
+      address: "БГД, Төмөр зам",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 10,
+      name: "Jetro төв дэлгүүр",
+      phone: "70114411, 98114797",
+      address: "ХУД, 1-р хороо 120 мянгат, Тэмээтэй хөшөөний баруун талд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 11,
+      name: "Jetro Tara",
+      phone: "86530033",
+      address: "ХУД, TARA center 1 давхарт",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 12,
+      name: "Hi store-2",
+      phone: "95906446",
+      address: "БЗД, 11-р хороо, Бага тэнгэрийн аманд, Бага тэнгэр сити хотхонд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 13,
+      name: "ЧКА",
+      phone: "",
+      address: "ЧД, 6-р хороо, 62/1-р байранд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 14,
+      name: "ЧКА-2",
+      phone: "99532233",
+      address: "ЧД, 6-р хороо, Тусгал сургуулийн зүүн талд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 15,
+      name: "Ariunda сүү цагаан идээний дэлгүүр",
+      phone: "88119508, 99983165",
+      address: "БГД, нарны зам, KOYO town хотхонд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 16,
+      name: "Төгөл",
+      phone: "80152578",
+      address: "БГД, Нарны хороололд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 17,
+      name: "Q mart",
+      phone: "99247643",
+      address: "ХУД, Яармаг, Богд Виста хотхонд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 18,
+      name: "Жансу",
+      phone: "86555542",
+      address: "ХУД, Яармаг, Cedar city residence хотхонд",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 19,
+      name: "АНУ зуслан дэлгүүр",
+      phone: "89800853",
+      address: "СБД, Шарга морьт явах зам дагуу",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 20,
+      name: "Бэлх зуслан дэлгүүр",
+      phone: "99094962",
+      address: "СБД, Бэлхийн зам",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 21,
+      name: "Richmarket зах",
+      phone: "88061645, 96054080",
+      address: "ХУД, Яармаг, Арцат хотхоны урд Richmarket худалдааны төв",
+      currentBalance: 0,
+    },
+    {
+      routeOrder: 22,
+      name: "Foodcity зах",
+      phone: "99276299",
+      address: "ХУД, Яармаг, Foodcity Худалдааны төв",
+      currentBalance: 0,
     },
   ];
 
@@ -86,7 +200,12 @@ async function main() {
     const existing = await prisma.store.findFirst({
       where: { name: s.name },
     });
-    if (!existing) {
+    if (existing) {
+      await prisma.store.update({
+        where: { id: existing.id },
+        data: s,
+      });
+    } else {
       await prisma.store.create({ data: s });
     }
   }
