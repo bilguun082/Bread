@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { Truck, Store, BarChart3 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Гарын Сайн Талх - Хүргэлт & Тооцоо',
-  description: 'Ээжийн талх хүргэлт, өр авлага, өдрийн хаалт, 58mm чек хэвлэх систем',
+  title: 'Натур Шим - Хөрөнгөний талхны хүргэлт',
+  description: 'Натур Шим хөрөнгөний талхны хүргэлт, өр авлага, падан, өдрийн хаалт, 58mm чек хэвлэх систем',
 };
 
 export const viewport: Viewport = {

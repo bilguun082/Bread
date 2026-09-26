@@ -11,6 +11,7 @@ export interface StoreHistoryModalProps {
   onClose: () => void;
   store: Store | null;
   onSelectReceipt: (record: DeliveryRecord) => void;
+  onResetBalance?: (store: Store) => void;
 }
 
 export const StoreHistoryModal: React.FC<StoreHistoryModalProps> = ({
@@ -18,6 +19,7 @@ export const StoreHistoryModal: React.FC<StoreHistoryModalProps> = ({
   onClose,
   store,
   onSelectReceipt,
+  onResetBalance,
 }) => {
   const [records, setRecords] = useState<DeliveryRecord[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -48,13 +50,24 @@ export const StoreHistoryModal: React.FC<StoreHistoryModalProps> = ({
         <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase">Одоогийн үлдэгдэл өр:</span>
-            <span
-              className={`text-xl font-black ${
-                store.currentBalance > 0 ? 'text-rose-600' : 'text-emerald-600'
-              }`}
-            >
-              {formatTugrik(store.currentBalance)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span
+                className={`text-xl font-black ${
+                  store.currentBalance > 0 ? 'text-rose-600' : 'text-emerald-600'
+                }`}
+              >
+                {formatTugrik(store.currentBalance)}
+              </span>
+              {store.currentBalance > 0 && onResetBalance && (
+                <button
+                  type="button"
+                  onClick={() => onResetBalance(store)}
+                  className="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-black active:scale-95 transition-all shadow-sm cursor-pointer"
+                >
+                  Өр тэглэх
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-700">

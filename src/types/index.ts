@@ -86,6 +86,8 @@ export interface DeliveryFormData {
   returnedBaguette: number;
   paidCash: number;
   paidTransfer: number;
+  paymentMethodLabel?: string;
+  showDebtOnReceipt?: boolean;
   note?: string;
 }
 
@@ -167,4 +169,6 @@ export interface ReceiptData {
   paidCash: number;
   paidTransfer: number;
   newBalance: number;
+  paymentMethodLabel?: string;
+  showDebtOnReceipt?: boolean;
 }

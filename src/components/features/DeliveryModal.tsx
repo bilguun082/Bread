@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import { Stepper } from '@/components/common/Stepper';
 import { formatTugrik } from '@/utils/currencyFormatter';
 import { calculateDeliveryFigures } from '@/utils/deliveryMath';
-import { Printer, Save, Banknote, Landmark, Clock, ArrowDownLeft } from 'lucide-react';
+import { Printer, Save, Banknote, Landmark, Clock, ArrowDownLeft, PackageCheck, RotateCcw, CheckCheck } from 'lucide-react';
 
 export interface DeliveryModalProps {
   isOpen: boolean;
@@ -32,9 +32,11 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
   const [returnedWhole, setReturnedWhole] = useState<number>(0);
   const [returnedBaguette, setReturnedBaguette] = useState<number>(0);
 
-  // Төлбөрийн дүн
+  // Төлбөрийн дүн ба тохиргоо
   const [paidCash, setPaidCash] = useState<number>(0);
   const [paidTransfer, setPaidTransfer] = useState<number>(0);
+  const [paymentMethodLabel, setPaymentMethodLabel] = useState<string>('Паданаас паданы хооронд');
+  const [showDebtOnReceipt, setShowDebtOnReceipt] = useState<boolean>(false);
   const [note, setNote] = useState<string>('');
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -51,6 +53,8 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
       setReturnedBaguette(0);
       setPaidCash(0);
       setPaidTransfer(0);
+      setPaymentMethodLabel('Паданаас паданы хооронд');
+      setShowDebtOnReceipt(false);
       setNote('');
       setShowReturns(false);
     }
@@ -83,20 +87,44 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
     products,
   ]);
 
-  // Хурдан товчлуурууд: Бүгдийг бэлнээр, бүгдийг дансаар, эсвэл зээл
-  const handlePayAllCash = () => {
-    setPaidCash(figures.totalPayable > 0 ? figures.totalPayable : 0);
+  // 1. Паданаас паданы хооронд (Зээл / Дараа тооцоо)
+  const handlePayConsignment = () => {
+    setPaidCash(0);
     setPaidTransfer(0);
+    setPaymentMethodLabel('Паданаас паданы хооронд');
   };
 
-  const handlePayAllTransfer = () => {
+  // 2. Өмнөх тооцоогоо өгсөн (Өмнөх өрийг төлөх)
+  const handlePayPreviousDebt = () => {
+    const prev = store?.currentBalance || 0;
+    if (prev <= 0) {
+      alert('Энэ дэлгүүрт өмнөх өрийн үлдэгдэл байхгүй байна.');
+      return;
+    }
+    setPaidTransfer(prev);
+    setPaidCash(0);
+    setPaymentMethodLabel('Өмнөх тооцоо');
+  };
+
+  // 3. Өнөөдрийнх бэлнээр
+  const handlePayTodayCash = () => {
+    setPaidCash(figures.todayDue > 0 ? figures.todayDue : 0);
+    setPaidTransfer(0);
+    setPaymentMethodLabel('Бэлнээр');
+  };
+
+  // 4. Өнөөдрийнх дансаар
+  const handlePayTodayTransfer = () => {
+    setPaidTransfer(figures.todayDue > 0 ? figures.todayDue : 0);
+    setPaidCash(0);
+    setPaymentMethodLabel('Дансаар');
+  };
+
+  // 5. Бүх тооцоог хаах
+  const handlePayAll = () => {
     setPaidTransfer(figures.totalPayable > 0 ? figures.totalPayable : 0);
     setPaidCash(0);
-  };
-
-  const handlePayCredit = () => {
-    setPaidCash(0);
-    setPaidTransfer(0);
+    setPaymentMethodLabel('Бүх тооцоо');
   };
 
   // Хадгалах үйлдэл
@@ -115,6 +143,8 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
           returnedBaguette,
           paidCash,
           paidTransfer,
+          paymentMethodLabel,
+          showDebtOnReceipt,
           note: note.trim() || undefined,
         },
         shouldPrint
@@ -313,81 +343,132 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
           </div>
         </div>
 
-        {/* 5. Төлбөр бүртгэх (1 товшилтын товчнууд + гараар оруулах) */}
-        <div>
-          <label className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider block mb-2">
-            2. Төлбөр хүлээн авсан
+        {/* 5. Төлбөр бүртгэх */}
+        <div className="space-y-2.5">
+          <label className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider block">
+            2. Төлбөр тооцоо
           </label>
 
-          {/* Quick presets for 5-second completion */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
+          {/* Quick presets for consignment & previous settlement */}
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={handlePayAllCash}
-              className="py-3 px-2 rounded-2xl bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-900 dark:text-emerald-200 font-extrabold text-xs flex flex-col items-center gap-1 active:scale-95 border border-emerald-300"
+              onClick={handlePayConsignment}
+              className={`py-3 px-3 rounded-2xl font-black text-xs flex items-center justify-center gap-2 active:scale-95 border-2 transition-all cursor-pointer ${
+                paymentMethodLabel === 'Паданаас паданы хооронд' && paidCash === 0 && paidTransfer === 0
+                  ? 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-300'
+                  : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:border-amber-400'
+              }`}
             >
-              <Banknote className="w-5 h-5 text-emerald-600" />
-              <span>Бүгд бэлнээр</span>
+              <PackageCheck className="w-5 h-5 flex-shrink-0" />
+              <div className="text-left">
+                <div className="leading-tight">Паданаас падан</div>
+                <div className="text-[10px] font-medium opacity-80">Шууд төлөхгүй</div>
+              </div>
             </button>
 
             <button
               type="button"
-              onClick={handlePayAllTransfer}
-              className="py-3 px-2 rounded-2xl bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-900 dark:text-blue-200 font-extrabold text-xs flex flex-col items-center gap-1 active:scale-95 border border-blue-300"
+              onClick={handlePayPreviousDebt}
+              className={`py-3 px-3 rounded-2xl font-black text-xs flex items-center justify-center gap-2 active:scale-95 border-2 transition-all cursor-pointer ${
+                paymentMethodLabel === 'Өмнөх тооцоо'
+                  ? 'bg-indigo-600 text-white border-indigo-700 shadow-md ring-2 ring-indigo-300'
+                  : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700 hover:border-indigo-400'
+              }`}
             >
-              <Landmark className="w-5 h-5 text-blue-600" />
-              <span>Бүгд дансаар</span>
+              <RotateCcw className="w-5 h-5 flex-shrink-0" />
+              <div className="text-left">
+                <div className="leading-tight">Өмнөх тооцоо</div>
+                <div className="text-[10px] font-medium opacity-80">
+                  {store.currentBalance > 0 ? formatTugrik(store.currentBalance) : 'Өргүй'}
+                </div>
+              </div>
+            </button>
+          </div>
+
+          {/* Quick presets for immediate payment */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={handlePayTodayCash}
+              className={`py-2.5 px-2 rounded-2xl font-bold text-xs flex flex-col items-center gap-1 active:scale-95 border transition-all cursor-pointer ${
+                paymentMethodLabel === 'Бэлнээр' && paidCash > 0
+                  ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 border-emerald-200 hover:bg-emerald-100'
+              }`}
+            >
+              <Banknote className="w-4 h-4 text-emerald-600" />
+              <span>Өнөөдөр бэлнээр</span>
             </button>
 
             <button
               type="button"
-              onClick={handlePayCredit}
-              className="py-3 px-2 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-extrabold text-xs flex flex-col items-center gap-1 active:scale-95 border border-slate-300"
+              onClick={handlePayTodayTransfer}
+              className={`py-2.5 px-2 rounded-2xl font-bold text-xs flex flex-col items-center gap-1 active:scale-95 border transition-all cursor-pointer ${
+                paymentMethodLabel === 'Дансаар' && paidTransfer > 0
+                  ? 'bg-blue-600 text-white border-blue-700 shadow-sm'
+                  : 'bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-200 border-blue-200 hover:bg-blue-100'
+              }`}
             >
-              <Clock className="w-5 h-5 text-slate-500" />
-              <span>Зээл / Өр үлдээх</span>
+              <Landmark className="w-4 h-4 text-blue-600" />
+              <span>Өнөөдөр дансаар</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePayAll}
+              className={`py-2.5 px-2 rounded-2xl font-bold text-xs flex flex-col items-center gap-1 active:scale-95 border transition-all cursor-pointer ${
+                paymentMethodLabel === 'Бүх тооцоо'
+                  ? 'bg-violet-600 text-white border-violet-700 shadow-sm'
+                  : 'bg-violet-50 dark:bg-violet-950/40 text-violet-900 dark:text-violet-200 border-violet-200 hover:bg-violet-100'
+              }`}
+            >
+              <CheckCheck className="w-4 h-4 text-violet-600" />
+              <span>Бүх өрийг хаах</span>
             </button>
           </div>
 
           {/* Detailed Inputs */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 pt-1">
             <div>
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
                 Бэлэн мөнгө:
               </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0"
-                  step="1000"
-                  value={paidCash === 0 ? '' : paidCash}
-                  placeholder="0₮"
-                  onChange={(e) => setPaidCash(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                  className="w-full h-14 px-4 text-xl font-black rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
-                />
-              </div>
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                value={paidCash === 0 ? '' : paidCash}
+                placeholder="0₮"
+                onChange={(e) => {
+                  setPaidCash(Math.max(0, parseInt(e.target.value, 10) || 0));
+                  setPaymentMethodLabel('Бэлнээр');
+                }}
+                className="w-full h-14 px-4 text-xl font-black rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+              />
             </div>
 
             <div>
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block mb-1">
                 Дансаар шилжүүлсэн:
               </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min="0"
-                  step="1000"
-                  value={paidTransfer === 0 ? '' : paidTransfer}
-                  placeholder="0₮"
-                  onChange={(e) => setPaidTransfer(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                  className="w-full h-14 px-4 text-xl font-black rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
-                />
-              </div>
+              <input
+                type="number"
+                min="0"
+                step="1000"
+                value={paidTransfer === 0 ? '' : paidTransfer}
+                placeholder="0₮"
+                onChange={(e) => {
+                  setPaidTransfer(Math.max(0, parseInt(e.target.value, 10) || 0));
+                  setPaymentMethodLabel('Дансаар');
+                }}
+                className="w-full h-14 px-4 text-xl font-black rounded-2xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-amber-500 focus:outline-none"
+              />
             </div>
           </div>
 
           {/* Resulting Balance Card */}
-          <div className="mt-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
+          <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
             <span className="text-sm font-bold text-amber-900 dark:text-amber-200">
               Эцсийн үлдэгдэл өр:
             </span>
@@ -401,6 +482,24 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
               {formatTugrik(figures.newBalance)}
             </span>
           </div>
+
+          {/* Privacy Toggle: Show Previous Debt on Printed Receipt */}
+          <label className="flex items-center justify-between p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer">
+            <div className="flex flex-col pr-2">
+              <span className="text-xs font-black text-slate-800 dark:text-slate-200">
+                Чек дээр өмнөх өрийг харуулах
+              </span>
+              <span className="text-[10px] text-slate-500">
+                Сонгоогүй үед харилцагчид өмнөх өр харагдахгүй, зөвхөн өнөөдрийн падан хэвлэгдэнэ
+              </span>
+            </div>
+            <input
+              type="checkbox"
+              checked={showDebtOnReceipt}
+              onChange={(e) => setShowDebtOnReceipt(e.target.checked)}
+              className="w-5 h-5 accent-amber-600 rounded cursor-pointer flex-shrink-0"
+            />
+          </label>
         </div>
 
         {/* Note (optional) */}

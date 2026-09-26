@@ -16,7 +16,11 @@ export function useReceiptPrinter() {
   const buildReceiptData = (
     record: DeliveryRecord,
     storeAddress?: string | null,
-    products?: Product[]
+    products?: Product[],
+    options?: {
+      showDebtOnReceipt?: boolean;
+      paymentMethodLabel?: string;
+    }
   ): ReceiptData => {
     const whiteProduct = products?.find((p) => p.sku === 'white');
     const wholeProduct = products?.find((p) => p.sku === 'whole');
@@ -74,6 +78,8 @@ export function useReceiptPrinter() {
       paidCash: record.paidCash,
       paidTransfer: record.paidTransfer,
       newBalance: record.newBalance,
+      showDebtOnReceipt: options?.showDebtOnReceipt ?? false,
+      paymentMethodLabel: options?.paymentMethodLabel,
     };
   };
 

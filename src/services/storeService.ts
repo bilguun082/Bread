@@ -29,6 +29,13 @@ export const storeService = {
     });
   },
 
+  async resetBalance(id: string): Promise<Store> {
+    return apiFetch<Store>(`/api/stores?id=${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ currentBalance: 0 }),
+    });
+  },
+
   async deleteStore(id: string): Promise<{ success: boolean }> {
     return apiFetch<{ success: boolean }>(`/api/stores?id=${id}`, {
       method: 'DELETE',

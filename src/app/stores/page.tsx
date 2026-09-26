@@ -10,7 +10,7 @@ import { EditStoreModal } from '@/components/features/EditStoreModal';
 import { StoreHistoryModal } from '@/components/features/StoreHistoryModal';
 import { ReceiptModal } from '@/components/features/ReceiptModal';
 import { formatTugrik } from '@/utils/currencyFormatter';
-import { Plus, Search, Phone, History, MapPin, RefreshCw, Edit3, Trash2 } from 'lucide-react';
+import { Plus, Search, Phone, History, MapPin, RefreshCw, Edit3, Trash2, Zap } from 'lucide-react';
 
 export default function StoresPage() {
   const {
@@ -22,6 +22,7 @@ export default function StoresPage() {
     isLoading,
     addStore,
     updateStore,
+    resetStoreBalance,
     deleteStore,
     refresh,
   } = useStores();
@@ -68,6 +69,21 @@ export default function StoresPage() {
     } catch (err) {
       console.error(err);
       alert('Дэлгүүр устгахад алдаа гарлаа: ' + (err as Error).message);
+    }
+  };
+
+  const handleResetBalanceClick = async (store: Store) => {
+    const isConfirmed = confirm(
+      `"${store.name}" дэлгүүрийн өрийн үлдэгдэл болох ${formatTugrik(store.currentBalance)}-ийг тэглэх үү?\n\n(Дансаар эсвэл бэлнээр тооцоо бүрэн хийгдсэн үед ашиглана)`
+    );
+    if (!isConfirmed) return;
+
+    try {
+      await resetStoreBalance(store.id);
+      refresh();
+    } catch (err) {
+      console.error(err);
+      alert('Өр тэглэхэд алдаа гарлаа: ' + (err as Error).message);
     }
   };
 
@@ -240,8 +256,20 @@ export default function StoresPage() {
                   </button>
                 </div>
 
-                {/* Action Buttons Row 2: Edit & Delete */}
+                {/* Action Buttons Row 2: Edit, Reset Debt & Delete */}
                 <div className="flex items-center gap-2 pt-1">
+                  {hasDebt && (
+                    <button
+                      type="button"
+                      onClick={() => handleResetBalanceClick(store)}
+                      className="h-10 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-1 text-xs font-black active:scale-95 transition-all cursor-pointer shadow-sm flex-shrink-0"
+                      title="Өр тэглэх (Тооцоо дууссан)"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-white" />
+                      <span>Өр тэглэх</span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(store)}
@@ -294,6 +322,10 @@ export default function StoresPage() {
         onClose={() => setIsHistoryModalOpen(false)}
         store={selectedHistoryStore}
         onSelectReceipt={handleSelectReceiptFromHistory}
+        onResetBalance={async (s) => {
+          await handleResetBalanceClick(s);
+          setIsHistoryModalOpen(false);
+        }}
       />
 
       {/* Modal to reprint receipt */}

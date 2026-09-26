@@ -65,6 +65,13 @@ export function useStores() {
     );
   };
 
+  // Дэлгүүрийн өрийг тэглэх (Тооцоо дууссан)
+  const resetStoreBalance = async (id: string) => {
+    const updated = await storeService.resetBalance(id);
+    setStores((prev) => prev.map((s) => (s.id === id ? { ...s, currentBalance: 0 } : s)));
+    return updated;
+  };
+
   // Дэлгүүр устгах
   const deleteStore = async (id: string) => {
     await storeService.deleteStore(id);
@@ -81,6 +88,7 @@ export function useStores() {
     error,
     addStore,
     updateStore,
+    resetStoreBalance,
     deleteStore,
     updateStoreBalanceLocal,
     refresh: fetchStores,

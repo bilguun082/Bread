@@ -93,7 +93,11 @@ export default function DeliveryRunPage() {
       const receipt = buildReceiptData(
         res.record,
         selectedStore.address,
-        products
+        products,
+        {
+          showDebtOnReceipt: formData.showDebtOnReceipt,
+          paymentMethodLabel: formData.paymentMethodLabel,
+        }
       );
       setCurrentReceiptData(receipt);
       setIsReceiptModalOpen(true);

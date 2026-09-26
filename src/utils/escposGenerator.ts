@@ -34,7 +34,7 @@ export function generateReceiptPlainText(data: ReceiptData): string {
 
   const lines: string[] = [
     lineDivider,
-    formatCentered('GARYN SAIN TALKH'),
+    formatCentered('NATUR SHIM'),
     formatCentered('(KHORONGO TALKH KHURGELT)'),
     lineDivider,
     `Ognoo:  ${data.dateTime}`,
@@ -53,7 +53,7 @@ export function generateReceiptPlainText(data: ReceiptData): string {
     const dunStr = formatTugrik(item.lineTotal).replace('₮', 'T').padStart(9, ' ');
     lines.push(`${nameShort}${ogsStr} ${bucStr} ${dunStr}`);
     if (item.barcode) {
-      lines.push(`  Barkod: ${item.barcode}`);
+      lines.push(`${item.barcode}`);
     }
   }
 
@@ -62,22 +62,35 @@ export function generateReceiptPlainText(data: ReceiptData): string {
   if (data.returnAmount > 0) {
     lines.push(formatTwoColumns('Butsaalt hasalt:', `-${formatTugrik(data.returnAmount).replace('₮', 'T')}`));
   }
-  lines.push(formatTwoColumns('Onoodor tulukh:', formatTugrik(data.todayDue).replace('₮', 'T')));
-  lines.push(formatTwoColumns('Omnokh uldegdel:', formatTugrik(data.prevBalance).replace('₮', 'T')));
-  lines.push(lineDivider);
-  lines.push(formatTwoColumns('NIIT TULBUR:', formatTugrik(data.totalPayable).replace('₮', 'T')));
+  lines.push(formatTwoColumns('ONOODOR TULUKH:', formatTugrik(data.todayDue).replace('₮', 'T')));
+
+  if (data.showDebtOnReceipt) {
+    lines.push(formatTwoColumns('Omnokh uldegdel:', formatTugrik(data.prevBalance).replace('₮', 'T')));
+    lines.push(lineDivider);
+    lines.push(formatTwoColumns('NIIT TULBUR:', formatTugrik(data.totalPayable).replace('₮', 'T')));
+  }
+
   lines.push(subDivider);
-  lines.push('Tulsun:');
-  lines.push(formatTwoColumns('  - Belneer:', formatTugrik(data.paidCash).replace('₮', 'T')));
-  lines.push(formatTwoColumns('  - Dansaar:', formatTugrik(data.paidTransfer).replace('₮', 'T')));
-  lines.push(lineDivider);
-  lines.push(formatTwoColumns('ULDEGDEL UR:', formatTugrik(data.newBalance).replace('₮', 'T')));
+  if (data.paymentMethodLabel) {
+    lines.push(`Tulbur: ${data.paymentMethodLabel}`);
+  }
+  if (data.paidCash > 0 || data.paidTransfer > 0) {
+    if (data.paidCash > 0) lines.push(formatTwoColumns('  - Belneer:', formatTugrik(data.paidCash).replace('₮', 'T')));
+    if (data.paidTransfer > 0) lines.push(formatTwoColumns('  - Dansaar:', formatTugrik(data.paidTransfer).replace('₮', 'T')));
+  } else {
+    lines.push('* Padanaas padand tulgana');
+  }
+
+  if (data.showDebtOnReceipt) {
+    lines.push(lineDivider);
+    lines.push(formatTwoColumns('ULDEGDEL UR:', formatTugrik(data.newBalance).replace('₮', 'T')));
+  }
   lines.push(lineDivider);
   lines.push('');
   lines.push('Khuleelgen ogson: .............');
   lines.push('Khuleen avsan:    .............');
   lines.push('');
-  lines.push(formatCentered('Bayarlalaa!'))
+  lines.push(formatCentered('Bayarlalaa!'));
   lines.push('\n\n\n'); // Цаас татах зайн төгсгөл
 
   return lines.join('\n');
