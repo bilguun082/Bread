@@ -43,4 +43,11 @@ export const deliveryService = {
   async getStoreDeliveries(storeId: string): Promise<DeliveryRecord[]> {
     return apiFetch<DeliveryRecord[]>(`/api/delivery?storeId=${encodeURIComponent(storeId)}`);
   },
+
+  // 6. Хүргэлтийн бичилтийг цуцлах / устгах
+  async deleteDelivery(id: string): Promise<{ success: boolean; updatedBalance: number }> {
+    return apiFetch<{ success: boolean; updatedBalance: number }>(`/api/delivery?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  },
 };

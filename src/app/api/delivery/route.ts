@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
+      id, // Хүргэлтийн бичилтийг засах үеийн ID
       storeId,
       deliveredWhite = 0,
       deliveredWhole = 0,
@@ -75,23 +76,9 @@ export async function POST(req: NextRequest) {
       sortOrder: p.sortOrder,
     }));
 
-    // 3. Тооцоолол хийх (deliveryMath цэвэр функцээр)
-    const figures = calculateDeliveryFigures({
-      deliveredWhite: Number(deliveredWhite) || 0,
-      deliveredWhole: Number(deliveredWhole) || 0,
-      deliveredBaguette: Number(deliveredBaguette) || 0,
-      returnedWhite: Number(returnedWhite) || 0,
-      returnedWhole: Number(returnedWhole) || 0,
-      returnedBaguette: Number(returnedBaguette) || 0,
-      prevBalance: store.currentBalance,
-      paidCash: Number(paidCash) || 0,
-      paidTransfer: Number(paidTransfer) || 0,
-      products,
-    });
-
     const todayDate = getTodayDateString();
 
-    // 4. Гүйлгээг Transaction дотор найдвартай гүйцэтгэх
+    // 3. Гүйлгээг Transaction дотор найдвартай гүйцэтгэх
     const result = await prisma.$transaction(async (tx) => {
       // Тухайн өдрийн DailyRun олох эсвэл үүсгэх
       let dailyRun = await tx.dailyRun.findFirst({
@@ -110,29 +97,88 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Хүргэлтийн баримт үүсгэх
-      const record = await tx.deliveryRecord.create({
-        data: {
-          dailyRunId: dailyRun.id,
-          storeId: store.id,
-          deliveredWhite: Number(deliveredWhite) || 0,
-          deliveredWhole: Number(deliveredWhole) || 0,
-          deliveredBaguette: Number(deliveredBaguette) || 0,
-          returnedWhite: Number(returnedWhite) || 0,
-          returnedWhole: Number(returnedWhole) || 0,
-          returnedBaguette: Number(returnedBaguette) || 0,
-          prevBalance: store.currentBalance,
-          subtotalAmount: figures.subtotalAmount,
-          returnAmount: figures.returnAmount,
-          todayDue: figures.todayDue,
-          totalPayable: figures.totalPayable,
-          paidCash: Number(paidCash) || 0,
-          paidTransfer: Number(paidTransfer) || 0,
-          debtAdded: figures.debtAdded,
-          newBalance: figures.newBalance,
-          note: note ? String(note).trim() : null,
-        },
+      // Өмнөх бичилт байгаа эсэхийг шалгах (Засах горим)
+      let existingRecord = null;
+      if (id) {
+        existingRecord = await tx.deliveryRecord.findUnique({ where: { id } });
+      } else {
+        existingRecord = await tx.deliveryRecord.findFirst({
+          where: {
+            dailyRunId: dailyRun.id,
+            storeId: store.id,
+          },
+        });
+      }
+
+      // Өмнөх суурь өрийг тооцох:
+      // Хэрэв өмнөх бичилтийг засаж байгаа бол одоогийн балансаас тэр бичилтийн зөрүүг хасаж анхны суурийг олно
+      const prevEffectiveBalance = existingRecord
+        ? (store.currentBalance - (existingRecord.newBalance - existingRecord.prevBalance))
+        : store.currentBalance;
+
+      // Шинэчилсэн тооцоолол хийх
+      const figures = calculateDeliveryFigures({
+        deliveredWhite: Number(deliveredWhite) || 0,
+        deliveredWhole: Number(deliveredWhole) || 0,
+        deliveredBaguette: Number(deliveredBaguette) || 0,
+        returnedWhite: Number(returnedWhite) || 0,
+        returnedWhole: Number(returnedWhole) || 0,
+        returnedBaguette: Number(returnedBaguette) || 0,
+        prevBalance: prevEffectiveBalance,
+        paidCash: Number(paidCash) || 0,
+        paidTransfer: Number(paidTransfer) || 0,
+        products,
       });
+
+      let record;
+      if (existingRecord) {
+        // Хуучин бичилтийг шинэчлэн засах (Update)
+        record = await tx.deliveryRecord.update({
+          where: { id: existingRecord.id },
+          data: {
+            deliveredWhite: Number(deliveredWhite) || 0,
+            deliveredWhole: Number(deliveredWhole) || 0,
+            deliveredBaguette: Number(deliveredBaguette) || 0,
+            returnedWhite: Number(returnedWhite) || 0,
+            returnedWhole: Number(returnedWhole) || 0,
+            returnedBaguette: Number(returnedBaguette) || 0,
+            prevBalance: prevEffectiveBalance,
+            subtotalAmount: figures.subtotalAmount,
+            returnAmount: figures.returnAmount,
+            todayDue: figures.todayDue,
+            totalPayable: figures.totalPayable,
+            paidCash: Number(paidCash) || 0,
+            paidTransfer: Number(paidTransfer) || 0,
+            debtAdded: figures.debtAdded,
+            newBalance: figures.newBalance,
+            note: note ? String(note).trim() : null,
+          },
+        });
+      } else {
+        // Шинээр хүргэлтийн баримт үүсгэх (Create)
+        record = await tx.deliveryRecord.create({
+          data: {
+            dailyRunId: dailyRun.id,
+            storeId: store.id,
+            deliveredWhite: Number(deliveredWhite) || 0,
+            deliveredWhole: Number(deliveredWhole) || 0,
+            deliveredBaguette: Number(deliveredBaguette) || 0,
+            returnedWhite: Number(returnedWhite) || 0,
+            returnedWhole: Number(returnedWhole) || 0,
+            returnedBaguette: Number(returnedBaguette) || 0,
+            prevBalance: prevEffectiveBalance,
+            subtotalAmount: figures.subtotalAmount,
+            returnAmount: figures.returnAmount,
+            todayDue: figures.todayDue,
+            totalPayable: figures.totalPayable,
+            paidCash: Number(paidCash) || 0,
+            paidTransfer: Number(paidTransfer) || 0,
+            debtAdded: figures.debtAdded,
+            newBalance: figures.newBalance,
+            note: note ? String(note).trim() : null,
+          },
+        });
+      }
 
       // Дэлгүүрийн одоогийн өрийг шинэчлэх
       const updatedStore = await tx.store.update({
@@ -177,5 +223,51 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error saving delivery record:', error);
     return NextResponse.json({ error: 'Хүргэлт хадгалахад алдаа гарлаа' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Delivery record ID required' }, { status: 400 });
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const record = await tx.deliveryRecord.findUnique({
+        where: { id },
+        include: { store: true },
+      });
+
+      if (!record) {
+        throw new Error('Delivery record not found');
+      }
+
+      // Дэлгүүрийн балансыг энэ хүргэлтийн өмнөх үеийнх рүү буцаах
+      const balanceDifference = record.newBalance - record.prevBalance;
+      const updatedStore = await tx.store.update({
+        where: { id: record.storeId },
+        data: {
+          currentBalance: record.store.currentBalance - balanceDifference,
+        },
+      });
+
+      // Хүргэлтийн бичилтийг устгах
+      await tx.deliveryRecord.delete({
+        where: { id },
+      });
+
+      return {
+        success: true,
+        updatedBalance: updatedStore.currentBalance,
+      };
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error('Error deleting delivery record:', error);
+    return NextResponse.json({ error: 'Хүргэлт цуцлахад алдаа гарлаа' }, { status: 500 });
   }
 }

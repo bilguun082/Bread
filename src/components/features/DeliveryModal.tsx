@@ -5,14 +5,16 @@ import { Button } from '@/components/common/Button';
 import { Stepper } from '@/components/common/Stepper';
 import { formatTugrik } from '@/utils/currencyFormatter';
 import { calculateDeliveryFigures } from '@/utils/deliveryMath';
-import { Printer, Save, Banknote, Landmark, Clock, ArrowDownLeft, PackageCheck, RotateCcw, CheckCheck } from 'lucide-react';
+import { Printer, Save, Banknote, Landmark, Clock, ArrowDownLeft, PackageCheck, RotateCcw, CheckCheck, Trash2 } from 'lucide-react';
 
 export interface DeliveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   store: Store | null;
   products: Product[];
+  existingRecord?: DeliveryRecord | null;
   onSubmit: (formData: DeliveryFormData, shouldPrint: boolean) => Promise<DeliveryRecord>;
+  onDeleteDelivery?: (recordId: string) => Promise<void>;
 }
 
 export const DeliveryModal: React.FC<DeliveryModalProps> = ({
@@ -20,7 +22,9 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
   onClose,
   store,
   products,
+  existingRecord,
   onSubmit,
+  onDeleteDelivery,
 }) => {
   // Хүргэх тоонууд
   const [deliveredWhite, setDeliveredWhite] = useState<number>(0);
@@ -42,23 +46,53 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showReturns, setShowReturns] = useState<boolean>(false);
 
-  // Модал нээгдэх үед формоо цэвэрлэх
+  // Модал нээгдэх үед формоо тохируулах (Шинээр эсвэл өмнөх хүргэлтийг засах)
   useEffect(() => {
     if (isOpen) {
-      setDeliveredWhite(0);
-      setDeliveredWhole(0);
-      setDeliveredBaguette(0);
-      setReturnedWhite(0);
-      setReturnedWhole(0);
-      setReturnedBaguette(0);
-      setPaidCash(0);
-      setPaidTransfer(0);
-      setPaymentMethodLabel('Паданаас паданы хооронд');
-      setShowDebtOnReceipt(false);
-      setNote('');
-      setShowReturns(false);
+      if (existingRecord) {
+        setDeliveredWhite(existingRecord.deliveredWhite);
+        setDeliveredWhole(existingRecord.deliveredWhole);
+        setDeliveredBaguette(existingRecord.deliveredBaguette);
+        setReturnedWhite(existingRecord.returnedWhite);
+        setReturnedWhole(existingRecord.returnedWhole);
+        setReturnedBaguette(existingRecord.returnedBaguette);
+        setPaidCash(existingRecord.paidCash);
+        setPaidTransfer(existingRecord.paidTransfer);
+        setNote(existingRecord.note || '');
+        setShowReturns(
+          existingRecord.returnedWhite > 0 ||
+          existingRecord.returnedWhole > 0 ||
+          existingRecord.returnedBaguette > 0
+        );
+        if (existingRecord.paidCash > 0) {
+          setPaymentMethodLabel('Бэлнээр');
+        } else if (existingRecord.paidTransfer > 0) {
+          setPaymentMethodLabel('Дансаар');
+        } else {
+          setPaymentMethodLabel('Паданаас паданы хооронд');
+        }
+        setShowDebtOnReceipt(false);
+      } else {
+        setDeliveredWhite(0);
+        setDeliveredWhole(0);
+        setDeliveredBaguette(0);
+        setReturnedWhite(0);
+        setReturnedWhole(0);
+        setReturnedBaguette(0);
+        setPaidCash(0);
+        setPaidTransfer(0);
+        setPaymentMethodLabel('Паданаас паданы хооронд');
+        setShowDebtOnReceipt(false);
+        setNote('');
+        setShowReturns(false);
+      }
     }
-  }, [isOpen, store]);
+  }, [isOpen, store, existingRecord]);
+
+  // Дэлгүүрийн энэ хүргэлтээс өмнөх суурь өрийг авах
+  const effectivePrevBalance = existingRecord
+    ? existingRecord.prevBalance
+    : (store?.currentBalance || 0);
 
   // Дүнгүүдийг шууд тооцоолох (Business logic helper-ээр)
   const figures = useMemo(() => {
@@ -69,7 +103,7 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
       returnedWhite,
       returnedWhole,
       returnedBaguette,
-      prevBalance: store?.currentBalance || 0,
+      prevBalance: effectivePrevBalance,
       paidCash,
       paidTransfer,
       products,
@@ -81,7 +115,7 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
     returnedWhite,
     returnedWhole,
     returnedBaguette,
-    store?.currentBalance,
+    effectivePrevBalance,
     paidCash,
     paidTransfer,
     products,
@@ -96,7 +130,7 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
 
   // 2. Өмнөх тооцоогоо өгсөн (Өмнөх өрийг төлөх)
   const handlePayPreviousDebt = () => {
-    const prev = store?.currentBalance || 0;
+    const prev = effectivePrevBalance;
     if (prev <= 0) {
       alert('Энэ дэлгүүрт өмнөх өрийн үлдэгдэл байхгүй байна.');
       return;
@@ -134,6 +168,7 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
     try {
       await onSubmit(
         {
+          id: existingRecord?.id,
           storeId: store.id,
           deliveredWhite,
           deliveredWhole,
@@ -171,10 +206,30 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title={store.name}
-      subtitle={store.address || undefined}
+      subtitle={existingRecord ? "✏️ Өнөөдрийн хүргэсэн тооцоог дахин засах" : (store.address || undefined)}
       maxWidth="lg"
     >
       <div className="space-y-5">
+        {/* Хэрэв өмнө хүргэсэн бичилтийг засаж байгаа бол мэдэгдэх самбар */}
+        {existingRecord && (
+          <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>Өмнөх хүргэлтийн тооцоог засаж байна</span>
+            </div>
+            {onDeleteDelivery && (
+              <button
+                type="button"
+                onClick={() => onDeleteDelivery(existingRecord.id)}
+                className="text-rose-600 dark:text-rose-400 hover:text-rose-700 font-extrabold flex items-center gap-1 active:scale-95 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Хүргэлт цуцлах</span>
+              </button>
+            )}
+          </div>
+        )}
+
         {/* 1. Дэлгүүрийн өмнөх өр үлдэгдэл самбар */}
         <div
           className={`p-4 rounded-2xl flex items-center justify-between border-2 ${
@@ -516,7 +571,7 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
 
       {/* Footer Action Buttons */}
       <div className="mt-6 flex flex-col gap-3">
-        {/* ХАДГАЛАХ & ЧЕК ХЭВЛЭХ (Хамгийн чухал ногоон том товч) */}
+        {/* ХАДГАЛАХ & ЧЕК ХЭВЛЭХ */}
         <Button
           variant="success"
           size="xl"
@@ -525,7 +580,7 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
           leftIcon={<Printer className="w-7 h-7 stroke-[2.5]" />}
           onClick={() => handleSave(true)}
         >
-          ХАДГАЛАХ & ЧЕК ХЭВЛЭХ
+          {existingRecord ? 'ӨӨРЧЛӨЛТИЙГ ХАДГАЛАХ & ЧЕК' : 'ХАДГАЛАХ & ЧЕК ХЭВЛЭХ'}
         </Button>
 
         {/* ЗӨВХӨН ХАДГАЛАХ */}
@@ -537,7 +592,7 @@ export const DeliveryModal: React.FC<DeliveryModalProps> = ({
           leftIcon={<Save className="w-5 h-5 text-slate-500" />}
           onClick={() => handleSave(false)}
         >
-          Зөвхөн хадгалах (хэвлэхгүй)
+          {existingRecord ? 'Өөрчлөлтийг хадгалах (хэвлэхгүй)' : 'Зөвхөн хадгалах (хэвлэхгүй)'}
         </Button>
       </div>
     </Modal>

@@ -77,6 +77,7 @@ export interface DeliveryRecord {
  * Хүргэлт хийх үеийн мобайл картын форм өгөгдөл
  */
 export interface DeliveryFormData {
+  id?: string; // Засах үед өмнөх бичилтийн ID
   storeId: string;
   deliveredWhite: number;
   deliveredWhole: number;

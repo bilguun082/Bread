@@ -69,13 +69,18 @@ export default function DeliveryRunPage() {
     (dailyRun?.deliveries || []).map((d) => d.storeId)
   );
 
+  // Сонгогдсон дэлгүүрийн өнөөдрийн хүргэлтийн бичилт (хэрэв өмнө нь бүртгэгдсэн бол)
+  const selectedDeliveryRecord = selectedStore
+    ? dailyRun?.deliveries?.find((d) => d.storeId === selectedStore.id) || null
+    : null;
+
   // Дэлгүүрийн карт дээр дарах үед
   const handleOpenDelivery = (store: Store) => {
     setSelectedStore(store);
     setIsDeliveryModalOpen(true);
   };
 
-  // Хүргэлтийн баримт илгээж хадгалах
+  // Хүргэлтийн баримт илгээж хадгалах (шинээр эсвэл засах)
   const handleDeliverySubmit = async (
     formData: DeliveryFormData,
     shouldPrint: boolean
@@ -84,9 +89,13 @@ export default function DeliveryRunPage() {
 
     // 1. Орон нутгийн дэлгүүрийн балансыг шууд шинэчлэх
     updateStoreBalanceLocal(formData.storeId, res.updatedBalance);
+    if (selectedStore && selectedStore.id === formData.storeId) {
+      setSelectedStore((prev) => (prev ? { ...prev, currentBalance: res.updatedBalance } : null));
+    }
 
     // 2. Өдрийн үлдэгдлийг шинэчлэх
     refreshDailyRun();
+    refreshStores();
 
     // 3. Хэрэв чек хэвлэх сонголттой бол
     if (shouldPrint && selectedStore) {
@@ -111,6 +120,18 @@ export default function DeliveryRunPage() {
     }
 
     return res.record;
+  };
+
+  // Хүргэлтийн бичилтийг цуцлах / устгах
+  const handleDeleteDelivery = async (recordId: string) => {
+    const res = await deliveryService.deleteDelivery(recordId);
+    if (selectedStore && res.updatedBalance !== undefined) {
+      updateStoreBalanceLocal(selectedStore.id, res.updatedBalance);
+      setSelectedStore((prev) => (prev ? { ...prev, currentBalance: res.updatedBalance } : null));
+    }
+    refreshDailyRun();
+    refreshStores();
+    setIsDeliveryModalOpen(false);
   };
 
   // Өглөөний ачилт хадгалах
@@ -202,6 +223,9 @@ export default function DeliveryRunPage() {
               store={store}
               index={idx}
               isDeliveredToday={deliveredStoreIds.has(store.id)}
+              todayDelivery={
+                dailyRun?.deliveries?.find((d) => d.storeId === store.id) || null
+              }
               onDeliverClick={handleOpenDelivery}
             />
           ))
@@ -214,7 +238,9 @@ export default function DeliveryRunPage() {
         onClose={() => setIsDeliveryModalOpen(false)}
         store={selectedStore}
         products={products}
+        existingRecord={selectedDeliveryRecord}
         onSubmit={handleDeliverySubmit}
+        onDeleteDelivery={handleDeleteDelivery}
       />
 
       {/* Өглөөний ачилт оруулах Modal */}
