@@ -10,6 +10,22 @@ export interface CreateStoreInput {
   routeOrder?: number;
 }
 
+export interface SettleDebtParams {
+  storeId: string;
+  selectedDeliveryIds: string[];
+  settleInitialBalance?: boolean;
+  paymentMethod?: 'TRANSFER' | 'CASH';
+  note?: string;
+  customAmount?: number;
+}
+
+export interface SettleDebtResult {
+  success: boolean;
+  updatedBalance: number;
+  settledAmount: number;
+  updatedDeliveryIds: string[];
+}
+
 export const storeService = {
   async getAllStores(): Promise<Store[]> {
     return apiFetch<Store[]>('/api/stores');
@@ -36,9 +52,17 @@ export const storeService = {
     });
   },
 
+  async settleDebt(params: SettleDebtParams): Promise<SettleDebtResult> {
+    return apiFetch<SettleDebtResult>('/api/stores/settle-debt', {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+  },
+
   async deleteStore(id: string): Promise<{ success: boolean }> {
     return apiFetch<{ success: boolean }>(`/api/stores?id=${id}`, {
       method: 'DELETE',
     });
   },
 };
+

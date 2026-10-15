@@ -4,7 +4,7 @@ import { Modal } from '@/components/common/Modal';
 import { deliveryService } from '@/services/deliveryService';
 import { formatTugrik } from '@/utils/currencyFormatter';
 import { formatReadableDateTime } from '@/utils/dateUtils';
-import { Phone, MapPin, Receipt, ArrowDownLeft } from 'lucide-react';
+import { Phone, MapPin, Receipt, ArrowDownLeft, CheckCircle2, CreditCard } from 'lucide-react';
 
 export interface StoreHistoryModalProps {
   isOpen: boolean;
@@ -62,9 +62,10 @@ export const StoreHistoryModal: React.FC<StoreHistoryModalProps> = ({
                 <button
                   type="button"
                   onClick={() => onResetBalance(store)}
-                  className="px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-black active:scale-95 transition-all shadow-sm cursor-pointer"
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-black active:scale-95 transition-all shadow-sm cursor-pointer flex items-center gap-1"
                 >
-                  Өр тэглэх
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>Тооцоо хаах / Тэглэх</span>
                 </button>
               )}
             </div>
@@ -133,11 +134,20 @@ export const StoreHistoryModal: React.FC<StoreHistoryModalProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
-                      <span>Төлсөн: Бэлэн {formatTugrik(r.paidCash)} | Данс {formatTugrik(r.paidTransfer)}</span>
-                      <span className="font-bold text-rose-500">
-                        Үлдсэн өр: {formatTugrik(r.newBalance)}
+                    <div className="flex items-center justify-between text-xs text-slate-500 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                      <span>
+                        Төлсөн: Бэлэн {formatTugrik(r.paidCash)} | Данс {formatTugrik(r.paidTransfer)}
                       </span>
+                      {(r.paidCash || 0) + (r.paidTransfer || 0) >= (r.todayDue || 0) ? (
+                        <span className="font-bold text-emerald-600 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Төлөгдсөн</span>
+                        </span>
+                      ) : (
+                        <span className="font-black text-rose-500">
+                          Үлдэгдэл: {formatTugrik(Math.max(0, (r.todayDue || 0) - ((r.paidCash || 0) + (r.paidTransfer || 0))))}
+                        </span>
+                      )}
                     </div>
                   </div>
                 );

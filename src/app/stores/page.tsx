@@ -8,9 +8,10 @@ import { deliveryService } from '@/services/deliveryService';
 import { AddStoreModal } from '@/components/features/AddStoreModal';
 import { EditStoreModal } from '@/components/features/EditStoreModal';
 import { StoreHistoryModal } from '@/components/features/StoreHistoryModal';
+import { SettleDebtModal } from '@/components/features/SettleDebtModal';
 import { ReceiptModal } from '@/components/features/ReceiptModal';
 import { formatTugrik } from '@/utils/currencyFormatter';
-import { Plus, Search, Phone, History, MapPin, RefreshCw, Edit3, Trash2, Zap } from 'lucide-react';
+import { Plus, Search, Phone, History, MapPin, RefreshCw, Edit3, Trash2, Zap, CreditCard } from 'lucide-react';
 
 export default function StoresPage() {
   const {
@@ -23,6 +24,7 @@ export default function StoresPage() {
     addStore,
     updateStore,
     resetStoreBalance,
+    settleStoreDebt,
     deleteStore,
     refresh,
   } = useStores();
@@ -42,6 +44,8 @@ export default function StoresPage() {
   const [selectedEditStore, setSelectedEditStore] = useState<Store | null>(null);
   const [selectedHistoryStore, setSelectedHistoryStore] = useState<Store | null>(null);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState<boolean>(false);
+  const [selectedSettleStore, setSelectedSettleStore] = useState<Store | null>(null);
+  const [isSettleModalOpen, setIsSettleModalOpen] = useState<boolean>(false);
   const [selectedReceiptData, setSelectedReceiptData] = useState<ReturnType<typeof buildReceiptData> | null>(null);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState<boolean>(false);
 
@@ -72,18 +76,24 @@ export default function StoresPage() {
     }
   };
 
-  const handleResetBalanceClick = async (store: Store) => {
-    const isConfirmed = confirm(
-      `"${store.name}" дэлгүүрийн өрийн үлдэгдэл болох ${formatTugrik(store.currentBalance)}-ийг тэглэх үү?\n\n(Дансаар эсвэл бэлнээр тооцоо бүрэн хийгдсэн үед ашиглана)`
-    );
-    if (!isConfirmed) return;
+  const handleOpenSettle = (store: Store) => {
+    setSelectedSettleStore(store);
+    setIsSettleModalOpen(true);
+  };
 
-    try {
-      await resetStoreBalance(store.id);
-      refresh();
-    } catch (err) {
-      console.error(err);
-      alert('Өр тэглэхэд алдаа гарлаа: ' + (err as Error).message);
+  const handleSettleDebtSubmit = async (params: {
+    storeId: string;
+    selectedDeliveryIds: string[];
+    settleInitialBalance: boolean;
+    paymentMethod: 'TRANSFER' | 'CASH';
+    note?: string;
+  }) => {
+    const res = await settleStoreDebt(params);
+    refresh();
+    if (selectedHistoryStore && selectedHistoryStore.id === params.storeId) {
+      setSelectedHistoryStore((prev) =>
+        prev ? { ...prev, currentBalance: res.updatedBalance } : null
+      );
     }
   };
 
@@ -256,17 +266,17 @@ export default function StoresPage() {
                   </button>
                 </div>
 
-                {/* Action Buttons Row 2: Edit, Reset Debt & Delete */}
+                {/* Action Buttons Row 2: Edit, Settle Debt & Delete */}
                 <div className="flex items-center gap-2 pt-1">
                   {hasDebt && (
                     <button
                       type="button"
-                      onClick={() => handleResetBalanceClick(store)}
-                      className="h-10 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-1 text-xs font-black active:scale-95 transition-all cursor-pointer shadow-sm flex-shrink-0"
-                      title="Өр тэглэх (Тооцоо дууссан)"
+                      onClick={() => handleOpenSettle(store)}
+                      className="h-10 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-1.5 text-xs font-black active:scale-95 transition-all cursor-pointer shadow-sm flex-shrink-0"
+                      title="Тооцоо хаах (Өдрөөр нь сонгож өр хасах)"
                     >
-                      <Zap className="w-3.5 h-3.5 fill-white" />
-                      <span>Өр тэглэх</span>
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>Тооцоо хаах</span>
                     </button>
                   )}
 
@@ -322,10 +332,17 @@ export default function StoresPage() {
         onClose={() => setIsHistoryModalOpen(false)}
         store={selectedHistoryStore}
         onSelectReceipt={handleSelectReceiptFromHistory}
-        onResetBalance={async (s) => {
-          await handleResetBalanceClick(s);
-          setIsHistoryModalOpen(false);
+        onResetBalance={(s) => {
+          handleOpenSettle(s);
         }}
+      />
+
+      {/* Modal to settle debt by selecting specific delivery dates */}
+      <SettleDebtModal
+        isOpen={isSettleModalOpen}
+        onClose={() => setIsSettleModalOpen(false)}
+        store={selectedSettleStore}
+        onSettle={handleSettleDebtSubmit}
       />
 
       {/* Modal to reprint receipt */}

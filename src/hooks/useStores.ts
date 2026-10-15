@@ -72,6 +72,15 @@ export function useStores() {
     return updated;
   };
 
+  // Тодорхой хүргэлтүүдийн тооцоог сонгож өрнөөс хасах
+  const settleStoreDebt = async (params: import('@/services/storeService').SettleDebtParams) => {
+    const res = await storeService.settleDebt(params);
+    setStores((prev) =>
+      prev.map((s) => (s.id === params.storeId ? { ...s, currentBalance: res.updatedBalance } : s))
+    );
+    return res;
+  };
+
   // Дэлгүүр устгах
   const deleteStore = async (id: string) => {
     await storeService.deleteStore(id);
@@ -89,6 +98,7 @@ export function useStores() {
     addStore,
     updateStore,
     resetStoreBalance,
+    settleStoreDebt,
     deleteStore,
     updateStoreBalanceLocal,
     refresh: fetchStores,
