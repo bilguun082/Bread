@@ -67,6 +67,35 @@ export async function GET(req: NextRequest) {
     const totalTransferReceived = dailyRun.deliveries.reduce((sum, d) => sum + d.paidTransfer, 0);
     const totalNewDebtAdded = dailyRun.deliveries.reduce((sum, d) => sum + d.debtAdded, 0);
 
+    // Дэлгүүр тус бүрийн хүргэсэн талхны задаргаа
+    const storeDeliveries = dailyRun.deliveries.map((d) => {
+      const totalDelivered =
+        (d.deliveredWhite || 0) + (d.deliveredWhole || 0) + (d.deliveredBaguette || 0);
+      const totalReturned =
+        (d.returnedWhite || 0) + (d.returnedWhole || 0) + (d.returnedBaguette || 0);
+      const totalPaid = (d.paidCash || 0) + (d.paidTransfer || 0);
+      return {
+        id: d.id,
+        storeId: d.storeId,
+        storeName: d.store?.name || 'Тодорхойгүй дэлгүүр',
+        deliveredWhite: d.deliveredWhite || 0,
+        deliveredWhole: d.deliveredWhole || 0,
+        deliveredBaguette: d.deliveredBaguette || 0,
+        totalDelivered,
+        returnedWhite: d.returnedWhite || 0,
+        returnedWhole: d.returnedWhole || 0,
+        returnedBaguette: d.returnedBaguette || 0,
+        totalReturned,
+        todayDue: d.todayDue || 0,
+        paidCash: d.paidCash || 0,
+        paidTransfer: d.paidTransfer || 0,
+        totalPaid,
+        debtAdded: d.debtAdded || 0,
+        note: d.note || null,
+        time: d.date instanceof Date ? d.date.toISOString() : String(d.date),
+      };
+    });
+
     const summary: DailyCloseoutSummary = {
       date,
       status: dailyRun.status as 'IN_PROGRESS' | 'COMPLETED',
@@ -100,6 +129,7 @@ export async function GET(req: NextRequest) {
       totalNewDebtAdded,
       totalReturnsDeducted,
       completedStoresCount: dailyRun.deliveries.length,
+      deliveries: storeDeliveries,
     };
 
     return NextResponse.json(summary);

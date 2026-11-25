@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DailyCloseoutSummary } from '@/types';
 import { formatTugrik } from '@/utils/currencyFormatter';
 import { Button } from '@/components/common/Button';
-import { CheckCircle2, AlertTriangle, Wallet, Landmark, FileText, Package } from 'lucide-react';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  Wallet,
+  Landmark,
+  FileText,
+  Package,
+  Store as StoreIcon,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 
 export interface DailyReconciliationCardProps {
   summary: DailyCloseoutSummary;
@@ -16,6 +26,7 @@ export const DailyReconciliationCard: React.FC<DailyReconciliationCardProps> = (
   isClosing,
 }) => {
   const isCompleted = summary.status === 'COMPLETED';
+  const [isStoresOpen, setIsStoresOpen] = useState<boolean>(false);
 
   return (
     <div className="space-y-5">
@@ -28,9 +39,20 @@ export const DailyReconciliationCard: React.FC<DailyReconciliationCardProps> = (
               1. Талхны тооцоо (Биет)
             </h3>
           </div>
-          <span className="text-xs font-bold bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 px-3 py-1 rounded-full">
-            {summary.completedStoresCount} дэлгүүр
-          </span>
+          <button
+            type="button"
+            onClick={() => setIsStoresOpen(!isStoresOpen)}
+            className="inline-flex items-center gap-1.5 text-xs font-black bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-950 dark:hover:bg-amber-900 dark:text-amber-300 px-3 py-1.5 rounded-2xl active:scale-95 transition-all shadow-sm border border-amber-300 dark:border-amber-800 cursor-pointer"
+            title="Дэлгүүр тус бүрийн хүргэсэн талхны тоог харах"
+          >
+            <StoreIcon className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
+            <span>{summary.completedStoresCount} дэлгүүрт хүргэсэн</span>
+            {isStoresOpen ? (
+              <ChevronUp className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronDown className="w-3.5 h-3.5" />
+            )}
+          </button>
         </div>
 
         {/* 4 Cards: Loaded, Delivered, Returned, Leftover */}
@@ -85,6 +107,129 @@ export const DailyReconciliationCard: React.FC<DailyReconciliationCardProps> = (
             </div>
           </div>
         </div>
+
+        {/* Хүргэсэн дэлгүүрүүдийн нарийвчилсан задаргаа (Accordion) */}
+        {isStoresOpen && (
+          <div className="pt-4 border-t-2 border-slate-100 dark:border-slate-800 space-y-3 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-black text-sm text-slate-900 dark:text-white uppercase flex items-center gap-1.5">
+                  <StoreIcon className="w-4 h-4 text-amber-600" />
+                  <span>
+                    Дэлгүүр тус бүрт хүргэсэн талхны тоо ({summary.deliveries?.length || summary.completedStoresCount})
+                  </span>
+                </h4>
+                <p className="text-[11px] text-slate-400">
+                  Энэ өдөр ямар талх хэдэн ширхэг хүргэснийг эндээс харна уу
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsStoresOpen(false)}
+                className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline"
+              >
+                Хураах ▴
+              </button>
+            </div>
+
+            {(!summary.deliveries || summary.deliveries.length === 0) ? (
+              <div className="p-4 text-center text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+                Энэ өдөр хүргэлтийн задаргаа хараахан байхгүй байна.
+              </div>
+            ) : (
+              <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
+                {summary.deliveries.map((item, index) => (
+                  <div
+                    key={item.id || index}
+                    className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 space-y-2"
+                  >
+                    {/* Дэлгүүрийн нэр ба нийт талх, дүн */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-400 font-black text-xs flex items-center justify-center flex-shrink-0">
+                          {index + 1}
+                        </span>
+                        <div>
+                          <h5 className="font-black text-sm text-slate-900 dark:text-white leading-tight">
+                            {item.storeName}
+                          </h5>
+                          {item.note && (
+                            <p className="text-[10px] text-slate-400 mt-0.5">{item.note}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right flex-shrink-0">
+                        <span className="text-sm font-black text-slate-900 dark:text-white block">
+                          {formatTugrik(item.todayDue)}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 block">
+                          Нийт: {item.totalDelivered} ш талх
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Ямар талх хичнээн ширхэг хүргэсэн задаргаа */}
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700">
+                        <span className="text-[10px] text-slate-400 font-bold block">1-р гурил</span>
+                        <span className="text-sm font-black text-slate-900 dark:text-white">
+                          {item.deliveredWhite} ш
+                        </span>
+                        {item.returnedWhite > 0 && (
+                          <span className="text-[10px] text-rose-500 font-semibold block">
+                            (-{item.returnedWhite} буц)
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700">
+                        <span className="text-[10px] text-slate-400 font-bold block">Бүхэл үр</span>
+                        <span className="text-sm font-black text-slate-900 dark:text-white">
+                          {item.deliveredWhole} ш
+                        </span>
+                        {item.returnedWhole > 0 && (
+                          <span className="text-[10px] text-rose-500 font-semibold block">
+                            (-{item.returnedWhole} буц)
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200/60 dark:border-slate-700">
+                        <span className="text-[10px] text-slate-400 font-bold block">Багет</span>
+                        <span className="text-sm font-black text-slate-900 dark:text-white">
+                          {item.deliveredBaguette} ш
+                        </span>
+                        {item.returnedBaguette > 0 && (
+                          <span className="text-[10px] text-rose-500 font-semibold block">
+                            (-{item.returnedBaguette} буц)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Төлбөр & Өр */}
+                    <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/60 dark:border-slate-700 font-semibold text-slate-500">
+                      <span>
+                        Төлсөн: Бэлэн {formatTugrik(item.paidCash)} | Данс {formatTugrik(item.paidTransfer)}
+                      </span>
+                      {item.debtAdded > 0 ? (
+                        <span className="font-bold text-rose-500">
+                          Үлдсэн өр: +{formatTugrik(item.debtAdded)}
+                        </span>
+                      ) : (
+                        <span className="font-bold text-emerald-600">
+                          ✓ Төлбөр бүрэн
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 2. Мөнгөний тооцоо (Түрийвчинд тоолох бэлэн мөнгө, дансны орлого, өр) */}

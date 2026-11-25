@@ -103,6 +103,27 @@ export interface Expense {
   note?: string | null;
 }
 
+export interface DailyStoreDeliverySummary {
+  id: string;
+  storeId: string;
+  storeName: string;
+  deliveredWhite: number;
+  deliveredWhole: number;
+  deliveredBaguette: number;
+  totalDelivered: number;
+  returnedWhite: number;
+  returnedWhole: number;
+  returnedBaguette: number;
+  totalReturned: number;
+  todayDue: number;
+  paidCash: number;
+  paidTransfer: number;
+  totalPaid: number;
+  debtAdded: number;
+  note?: string | null;
+  time?: string;
+}
+
 /**
  * Өдрийн төгсгөлийн тооцоо, хаалтын тайлан
  */
@@ -141,6 +162,7 @@ export interface DailyCloseoutSummary {
   totalNewDebtAdded: number;
   totalReturnsDeducted: number;
   completedStoresCount: number;
+  deliveries?: DailyStoreDeliverySummary[];
 }
 
 /**
