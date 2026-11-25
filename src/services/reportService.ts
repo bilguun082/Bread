@@ -1,6 +1,23 @@
 import { DailyCloseoutSummary, Expense } from '@/types';
 import { apiFetch } from './apiClient';
 
+export interface MonthlyDaySummary {
+  date: string;
+  breadDelivered: number;
+  revenue: number;
+  cashReceived: number;
+  transferReceived: number;
+  debtAdded: number;
+}
+
+export interface MonthlyStoreSummary {
+  storeId: string;
+  storeName: string;
+  breadDelivered: number;
+  totalAmount: number;
+  paidAmount: number;
+}
+
 export interface MonthlyPLReport {
   month: string; // YYYY-MM
   totalRevenue: number;
@@ -9,6 +26,18 @@ export interface MonthlyPLReport {
   totalExpenses: number;
   netProfit: number;
   totalBreadDelivered: number;
+  breadBreakdown?: {
+    white: number;
+    whole: number;
+    baguette: number;
+    returned: number;
+  };
+  totalCashReceived?: number;
+  totalTransferReceived?: number;
+  totalCollected?: number;
+  totalDebtAdded?: number;
+  dailyDeliveries?: MonthlyDaySummary[];
+  storeBreakdown?: MonthlyStoreSummary[];
   expenses: Expense[];
 }
 
